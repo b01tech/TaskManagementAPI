@@ -17,6 +17,14 @@ public class TasksController : ControllerBase
         _context = context;
     }
 
+    /// <summary>
+    /// Retrieves all tasks with optional filtering and pagination.
+    /// </summary>
+    /// <param name="isCompleted">Filter by completion status.</param>
+    /// <param name="pageNumber">Page number for pagination.</param>
+    /// <param name="pageSize">Number of items per page.</param>
+    /// <returns>A list of tasks.</returns>
+    [ProducesResponseType(typeof(IEnumerable<Task>), 200)]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TaskItem>>> GetAllTasks(
         [FromQuery] bool? isCompleted = null,
@@ -52,6 +60,13 @@ public class TasksController : ControllerBase
 
     }
 
+    /// <summary>
+    /// Retrieves a task find by id.
+    /// </summary>
+    /// <param name="id">Id.</param>
+    /// <returns>The required task, or a 404 Not Found if it doesn't exist.</returns>
+    [ProducesResponseType(typeof(TaskItem), 201)]
+    [ProducesResponseType(404)]
     [HttpGet("{id}")]
     public async Task<ActionResult<TaskItem>> GetTask(int id)
     {
@@ -63,6 +78,13 @@ public class TasksController : ControllerBase
         return Ok(task);
     }
 
+    /// <summary>
+    /// Creates a new task.
+    /// </summary>
+    /// <param name="task">A task object to be created</param>
+    /// <returns>The created task</returns>
+    [ProducesResponseType(201)]
+    [ProducesResponseType(400)]
     [HttpPost]
     public async Task<ActionResult<TaskItem>> CreateTask(TaskItem task)
     {
@@ -74,6 +96,16 @@ public class TasksController : ControllerBase
         await _context.SaveChangesAsync();
         return CreatedAtAction("GetTask", new { id = task.Id }, task);
     }
+
+    /// <summary>
+    /// Updates an existing task.
+    /// </summary>
+    /// <param name="id">Id of the task to update</param>
+    /// <param name="task">The updated task object</param>
+    /// <returns>No content if sucessful, or a 404 Not Found if the task doesn't exist.</returns>
+    [ProducesResponseType(204)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateTask(int id, TaskItem task)
@@ -104,6 +136,13 @@ public class TasksController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Deletes an existing task.
+    /// </summary>
+    /// <param name="id">Id of the task to delete</param>
+    /// <returns>No content if sucessful, or 404 Not Found if the task doesn't exist.</returns>
+    [ProducesResponseType(204)]
+    [ProducesResponseType(404)]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTask(int id)
     {
