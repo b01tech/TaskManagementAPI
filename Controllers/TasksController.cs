@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
+using System.Text.Json;
 using TaskManagementAPI.Data;
 using TaskManagementAPI.Models;
 
@@ -17,9 +18,38 @@ public class TasksController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<TaskItem>>> GetAllTasks()
+    public async Task<ActionResult<IEnumerable<TaskItem>>> GetAllTasks(
+        [FromQuery] bool? isCompleted = null,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
     {
-        return await _context.Tasks.Take(100).ToListAsync();
+        IQueryable<TaskItem> query = _context.Tasks.AsQueryable();
+
+        if (isCompleted.HasValue)
+        {
+            query = query.Where(t => t.IsDone == isCompleted.Value);
+        }
+
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var tasks = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(
+            new
+            {
+                totalCount,
+                pageSize,
+                currentPage = pageNumber,
+                totalPages
+            }
+        ));
+
+        return Ok(tasks);
+
     }
 
     [HttpGet("{id}")]
